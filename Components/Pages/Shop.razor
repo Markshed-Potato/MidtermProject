@@ -1,0 +1,68 @@
+@page "/shop"
+@inject MidtermProject.Services.KeylabStoreService StoreService
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <div class="flex flex-col md:flex-row gap-8">
+        <!-- Dynamic Sidebar Filters -->
+        <aside class="w-full md:w-56 space-y-6 flex-shrink-0">
+            <div>
+                <h3 class="font-bold text-slate-900 text-sm mb-3">Category</h3>
+                <div class="space-y-1.5 text-xs text-slate-600">
+                    <button @onclick='() => selectedCategory = ""' class="block font-semibold hover:text-slate-900">All Categories</button>
+                    <button @onclick='() => selectedCategory = "Keyboards"' class="block hover:text-slate-900">Keyboards</button>
+                    <button @onclick='() => selectedCategory = "Switches"' class="block hover:text-slate-900">Switches</button>
+                    <button @onclick='() => selectedCategory = "Keycaps"' class="block hover:text-slate-900">Keycaps</button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-slate-900 text-sm mb-3">Layout</h3>
+                <div class="space-y-1 text-xs text-slate-600">
+                    @foreach (var l in new[] { "60%", "65%", "75%", "TKL", "Full" })
+                    {
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" @onchange="() => selectedLayout = l" checked="@(selectedLayout == l)" class="rounded text-slate-900" />
+                            <span>@l</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        </aside>
+
+        <!-- Product Grid -->
+        <main class="flex-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach (var p in FilteredProducts)
+                {
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            @if (p.IsOnSale)
+                            {
+                                <span class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Sale</span>
+                            }
+                            <a href="/product/@p.Id">
+                                <img src="@p.PrimaryImageUrl" class="w-full h-48 object-cover rounded-xl my-2" />
+                            </a>
+                            <h3 class="font-bold text-slate-900 text-base">@p.Name</h3>
+                            <p class="text-xs text-amber-500 my-1">★ @p.Rating <span class="text-slate-400">(@p.ReviewCount)</span></p>
+                        </div>
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                            <span class="font-black text-slate-900 text-lg">$@p.Price</span>
+                            <button @onclick="() => StoreService.AddToCart(p)" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-xl">Add to Cart</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+@code {
+    private string selectedCategory = "";
+    private string selectedLayout = "";
+
+    private IEnumerable<MidtermProject.Models.Product> FilteredProducts =>
+        StoreService.GetProducts()
+            .Where(p => string.IsNullOrEmpty(selectedCategory) || p.Category == selectedCategory)
+            .Where(p => string.IsNullOrEmpty(selectedLayout) || p.Layout == selectedLayout);
+}
